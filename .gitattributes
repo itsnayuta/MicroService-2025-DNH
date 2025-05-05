@@ -1,0 +1,26 @@
+# Tự động chuẩn hóa các file văn bản
+* text=auto
+
+# Đảm bảo các file shell script dùng Unix-style line endings
+/mvnw text eol=lf
+/mvnw.cmd text eol=crlf
+
+# Java source files dùng LF để nhất quán giữa các hệ điều hành
+*.java text eol=lf
+
+# Config và script khác
+*.sh text eol=lf
+*.bat text eol=crlf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.properties text eol=lf
+*.xml text eol=lf
+*.json text eol=lf
+
+# Loại trừ xử lý diff với file nhị phân
+*.jar binary
+*.war binary
+*.class binary
+*.png binary
+*.jpg binary
+*.pdf binary
