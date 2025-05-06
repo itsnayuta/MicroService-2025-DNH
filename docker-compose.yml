@@ -1,16 +1,84 @@
-version: '3.8'
+version: "3.7"
+
 services:
-  service-a:
-    build: ./services/service-a
+  # MySQL cho service-user
+  mysql-user:
+    image: mysql:8.0
+    container_name: mysql-user
+    environment:
+      MYSQL_ROOT_PASSWORD: mysqlpassword
+      MYSQL_DATABASE: user_db
+      MYSQL_USER: usermysql
+      MYSQL_PASSWORD: mysqlpassword
     ports:
-      - "5001:5000"
+      - "3307:3306"
+    volumes:
+      - ./services/service-user/init_script/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - microservices-network
+    restart: unless-stopped
 
-  service-b:
-    build: ./services/service-b
+  # MySQL cho service-quizz
+  mysql-quizz:
+    image: mysql:8.0
+    container_name: mysql-quizz
+    environment:
+      MYSQL_ROOT_PASSWORD: mysqlpassword
+      MYSQL_DATABASE: quiz_db
+      MYSQL_USER: quizzmysql
+      MYSQL_PASSWORD: mysqlpassword
     ports:
-      - "5002:5000"
-
-  gateway:
+      - "3308:3306"
+    volumes:
+      - ./services/service-quizz/init_script/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - microservices-network
+    restart: unless-stopped
+  # service-user
+  service-user:
+    build: ./services/service-user
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-user:3306/user_db?useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=usermysql
+      - SPRING_DATASOURCE_PASSWORD=mysqlpassword
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MySQLDialect
+      - SPRING_JPA_SHOW_SQL=true
+    depends_on:
+      - mysql-user
+    networks:
+      - microservices-network
+    restart: unless-stopped
+  # service-quizz
+  service-quizz:
+    build: ./services/service-quizz
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-quizz:3306/quiz_db?useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=quizzmysql
+      - SPRING_DATASOURCE_PASSWORD=mysqlpassword
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MySQLDialect
+      - SPRING_JPA_SHOW_SQL=true
+    depends_on:
+      - mysql-quizz
+    networks:
+      - microservices-network
+    restart: unless-stopped
+  # API Gateway
+  api-gateway:
     build: ./gateway
     ports:
-      - "8080:8000"
+      - "8080:8080"
+    depends_on:
+      - service-user
+      - service-quizz
+    networks:
+      - microservices-network
+    restart: unless-stopped
+networks:
+  microservices-network:
+    driver: bridge
