@@ -1,16 +1,52 @@
-version: '3.8'
 services:
-  service-a:
-    build: ./services/service-a
+  result_db:
+    image: postgres:15
+    container_name: result_db
+    environment:
+      POSTGRES_DB: result_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
     ports:
-      - "5001:5000"
+      - "5432:5432"
+    volumes:
+      - result_data:/var/lib/postgresql/data
 
-  service-b:
-    build: ./services/service-b
+  notification_db:
+    image: postgres:15
+    container_name: notification_db
+    environment:
+      POSTGRES_DB: notification_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
     ports:
-      - "5002:5000"
+      - "5433:5432"
+    volumes:
+      - notification_data:/var/lib/postgresql/data
 
-  gateway:
-    build: ./gateway
+  result_service:
+    build: ./services/result_service
+    container_name: result_service
     ports:
-      - "8080:8000"
+      - "8080:8080"
+    depends_on:
+      - result_db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://result_db:5432/result_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 123456
+
+  notification_service:
+    build: ./services/notification_service
+    container_name: notification_service
+    ports:
+      - "8081:8080"
+    depends_on:
+      - notification_db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://notification_db:5432/notification_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 123456
+
+volumes:
+  result_data:
+  notification_data:
