@@ -1,0 +1,184 @@
+# service-b.yamlopenapi: 3.0.0
+info:
+  title: User Service API
+  description: API cho việc quản lý người dùng trong hệ thống.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api/v1
+paths:
+  /users/login:
+    post:
+      summary: Đăng nhập người dùng
+      description: Người dùng có thể đăng nhập với username và password để nhận một token JWT.
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: "john_doe"
+                password:
+                  type: string
+                  example: "password123"
+      responses:
+        "200":
+          description: Đăng nhập thành công, trả về token
+          content:
+            application/json:
+              examples:
+                application/json:
+                  value:
+                    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImplbWZyaWVzY28iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE2MjkxNzQ1Mjh9.kEw_GeGD0fTTeWZdtFOqLg_34F0yts9fX_65szmZkRg"
+        "401":
+          description: Thông tin đăng nhập không hợp lệ
+          content:
+            application/json:
+              examples:
+                application/json:
+                  value:
+                    error: "Invalid username or password"
+  /users/me:
+    get:
+      summary: Lấy thông tin người dùng hiện tại
+      description: Trả về thông tin người dùng đã đăng nhập dựa trên token JWT.
+      operationId: getCurrentUser
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: Bearer token cho việc xác thực
+          schema:
+            type: string
+          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImplbWZyaWVzY28iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE2MjkxNzQ1Mjh9.kEw_GeGD0fTTeWZdtFOqLg_34F0yts9fX_65szmZkRg"
+      responses:
+        "200":
+          description: Trả về thông tin người dùng
+          content:
+            application/json:
+              examples:
+                application/json:
+                  value:
+                    username: "john_doe"
+                    email: "john.doe@example.com"
+                    role: "ADMIN"
+        "401":
+          description: Unauthorized - Token không hợp lệ
+        "404":
+          description: Không tìm thấy người dùng
+          content:
+            application/json:
+              examples:
+                application/json:
+                  value:
+                    message: "NOT FOUND USER"
+  /users/register:
+    post:
+      summary: Đăng ký người dùng mới (chỉ admin)
+      description: Chỉ admin mới có quyền tạo người dùng mới.
+      operationId: register
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: Bearer token cho việc xác thực
+          schema:
+            type: string
+          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImplbWZyaWVzY28iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE2MjkxNzQ1Mjh9.kEw_GeGD0fTTeWZdtFOqLg_34F0yts9fX_65szmZkRg"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: "john_doe"
+                password:
+                  type: string
+                  example: "password123"
+                email:
+                  type: string
+                  example: "john.doe@example.com"
+                role:
+                  type: string
+                  example: "USER"
+      responses:
+        "201":
+          description: Đăng ký người dùng thành công
+          content:
+            application/json:
+              examples:
+                application/json:
+                  value:
+                    username: "john_doe"
+                    email: "john.doe@example.com"
+                    role: "USER"
+        "403":
+          description: Forbidden - Chỉ admin mới có quyền đăng ký người dùng mới
+        "401":
+          description: Unauthorized - Token không hợp lệ
+  /users:
+    get:
+      summary: Lấy danh sách người dùng (chỉ admin)
+      description: Chỉ admin mới có quyền xem danh sách người dùng.
+      operationId: getAllUsers
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: Bearer token cho việc xác thực
+          schema:
+            type: string
+          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImplbWZyaWVzY28iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE2MjkxNzQ1Mjh9.kEw_GeGD0fTTeWZdtFOqLg_34F0yts9fX_65szmZkRg"
+      responses:
+        "200":
+          description: Trả về danh sách người dùng
+          content:
+            application/json:
+              examples:
+                application/json:
+                  value:
+                    - username: "john_doe"
+                      email: "john.doe@example.com"
+                      role: "USER"
+                    - username: "jane_doe"
+                      email: "jane.doe@example.com"
+                      role: "ADMIN"
+        "403":
+          description: Forbidden - Chỉ admin mới có quyền truy cập
+        "401":
+          description: Unauthorized - Token không hợp lệ
+  /users/{username}:
+    delete:
+      summary: Xóa người dùng (chỉ admin)
+      description: Chỉ admin mới có quyền xóa người dùng.
+      operationId: deleteUser
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: Bearer token cho việc xác thực
+          schema:
+            type: string
+          example: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImplbWZyaWVzY28iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE2MjkxNzQ1Mjh9.kEw_GeGD0fTTeWZdtFOqLg_34F0yts9fX_65szmZkRg"
+        - name: username
+          in: path
+          required: true
+          description: Tên người dùng cần xóa
+          schema:
+            type: string
+          example: "john_doe"
+      responses:
+        "200":
+          description: Xóa người dùng thành công
+        "404":
+          description: Không tìm thấy người dùng để xóa
+        "403":
+          description: Forbidden - Chỉ admin mới có quyền xóa người dùng
+        "401":
+          description: Unauthorized - Token không hợp lệ

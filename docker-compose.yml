@@ -1,52 +1,84 @@
+version: "3.7"
+
 services:
-  result_db:
-    image: postgres:15
-    container_name: result_db
+  # MySQL cho service-user
+  mysql-user:
+    image: mysql:8.0
+    container_name: mysql-user
     environment:
-      POSTGRES_DB: result_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 123456
+      MYSQL_ROOT_PASSWORD: mysqlpassword
+      MYSQL_DATABASE: user_db
+      MYSQL_USER: usermysql
+      MYSQL_PASSWORD: mysqlpassword
     ports:
-      - "5432:5432"
+      - "3307:3306"
     volumes:
-      - result_data:/var/lib/postgresql/data
+      - ./services/service-user/init_script/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - microservices-network
+    restart: unless-stopped
 
-  notification_db:
-    image: postgres:15
-    container_name: notification_db
+  # MySQL cho service-quizz
+  mysql-quizz:
+    image: mysql:8.0
+    container_name: mysql-quizz
     environment:
-      POSTGRES_DB: notification_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 123456
+      MYSQL_ROOT_PASSWORD: mysqlpassword
+      MYSQL_DATABASE: quiz_db
+      MYSQL_USER: quizzmysql
+      MYSQL_PASSWORD: mysqlpassword
     ports:
-      - "5433:5432"
+      - "3308:3306"
     volumes:
-      - notification_data:/var/lib/postgresql/data
-
-  result_service:
-    build: ./services/result_service
-    container_name: result_service
+      - ./services/service-quizz/init_script/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - microservices-network
+    restart: unless-stopped
+  # service-user
+  service-user:
+    build: ./services/service-user
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-user:3306/user_db?useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=usermysql
+      - SPRING_DATASOURCE_PASSWORD=mysqlpassword
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MySQLDialect
+      - SPRING_JPA_SHOW_SQL=true
+    depends_on:
+      - mysql-user
+    networks:
+      - microservices-network
+    restart: unless-stopped
+  # service-quizz
+  service-quizz:
+    build: ./services/service-quizz
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-quizz:3306/quiz_db?useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=quizzmysql
+      - SPRING_DATASOURCE_PASSWORD=mysqlpassword
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MySQLDialect
+      - SPRING_JPA_SHOW_SQL=true
+    depends_on:
+      - mysql-quizz
+    networks:
+      - microservices-network
+    restart: unless-stopped
+  # API Gateway
+  api-gateway:
+    build: ./gateway
     ports:
       - "8080:8080"
     depends_on:
-      - result_db
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://result_db:5432/result_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: 123456
-
-  notification_service:
-    build: ./services/notification_service
-    container_name: notification_service
-    ports:
-      - "8081:8080"
-    depends_on:
-      - notification_db
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://notification_db:5432/notification_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: 123456
-
-volumes:
-  result_data:
-  notification_data:
+      - service-user
+      - service-quizz
+    networks:
+      - microservices-network
+    restart: unless-stopped
+networks:
+  microservices-network:
+    driver: bridge
