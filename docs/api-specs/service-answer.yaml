@@ -1,0 +1,310 @@
+openapi: 3.0.0
+info:
+  title: Answer Service API
+  description: API cho service answer
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api/v1
+
+paths:
+  /answers:
+    get:
+      summary: Lấy danh sách tất cả câu trả lời
+      description: Chỉ cho phép admin
+      operationId: getAllAnswers
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: Bearer token for authentication
+          schema:
+            type: string
+          example: "Bearer your_jwt_token_here"
+      responses:
+        "200":
+          description: A list of answers
+          content:
+            application/json:
+              examples:
+                application/json:
+                  value:
+                    - id: 1
+                      questionId: 1
+                      content: "Tin cậy, Đảm bảo, Hữu hình, Đồng cảm và Đáp ứng"
+                      isCorrect: true
+                    - id: 2
+                      questionId: 1
+                      content: "Chất lượng, Giá cả, Mẫu mã, Thời gian và Dịch vụ"
+                      isCorrect: false
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden - Only admin can access all answers
+
+    post:
+      summary: Tạo một câu trả lời mới
+      description: Accessible by both ADMIN and USER roles
+      operationId: createAnswer
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: Bearer token for authentication
+          schema:
+            type: string
+          example: "Bearer your_jwt_token_here"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            examples:
+              application/json:
+                value:
+                  questionId: 1
+                  content: "Tin cậy, Đảm bảo, Hữu hình, Đồng cảm và Đáp ứng"
+                  isCorrect: true
+      responses:
+        "201":
+          description: Answer created successfully
+          content:
+            application/json:
+              examples:
+                application/json:
+                  value:
+                    id: 1
+                    questionId: 1
+                    content: "Tin cậy, Đảm bảo, Hữu hình, Đồng cảm và Đáp ứng"
+                    isCorrect: true
+        "401":
+          description: Unauthorized
+
+  /answers/{id}:
+    get:
+      summary: Lấy chi tiết câu trả lời theo id
+      description: Accessible by both ADMIN and USER roles
+      operationId: getAnswerById
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: Bearer token for authentication
+          schema:
+            type: string
+          example: "Bearer your_jwt_token_here"
+        - name: id
+          in: path
+          required: true
+          description: ID of the answer
+          schema:
+            type: integer
+          example: 1
+      responses:
+        "200":
+          description: An answer
+          content:
+            application/json:
+              examples:
+                application/json:
+                  value:
+                    id: 1
+                    questionId: 1
+                    content: "Tin cậy, Đảm bảo, Hữu hình, Đồng cảm và Đáp ứng"
+                    isCorrect: true
+        "401":
+          description: Unauthorized
+        "404":
+          description: Answer not found
+
+    put:
+      summary: Cập nhật câu trả lời
+      description: Accessible by both ADMIN and USER roles
+      operationId: updateAnswer
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: Bearer token for authentication
+          schema:
+            type: string
+          example: "Bearer your_jwt_token_here"
+        - name: id
+          in: path
+          required: true
+          description: ID of the answer to update
+          schema:
+            type: integer
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            examples:
+              application/json:
+                value:
+                  questionId: 1
+                  content: "Tin cậy, Đảm bảo, Hữu hình, Đồng cảm và Đáp ứng (cập nhật)"
+                  isCorrect: true
+      responses:
+        "200":
+          description: Answer updated successfully
+          content:
+            application/json:
+              examples:
+                application/json:
+                  value:
+                    id: 1
+                    questionId: 1
+                    content: "Tin cậy, Đảm bảo, Hữu hình, Đồng cảm và Đáp ứng (cập nhật)"
+                    isCorrect: true
+        "401":
+          description: Unauthorized
+        "404":
+          description: Answer not found
+
+    delete:
+      summary: Xóa một câu trả lời theo id
+      description: Only accessible by admin
+      operationId: deleteAnswer
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: Bearer token for authentication
+          schema:
+            type: string
+          example: "Bearer your_jwt_token_here"
+        - name: id
+          in: path
+          required: true
+          description: ID of the answer to delete
+          schema:
+            type: integer
+          example: 1
+      responses:
+        "204":
+          description: Answer deleted successfully
+        "403":
+          description: Forbidden - Only admin can delete answers
+        "401":
+          description: Unauthorized
+        "404":
+          description: Answer not found
+
+  /answers/question/{questionId}:
+    get:
+      summary: Lấy danh sách câu trả lời theo question ID
+      description: Accessible by both ADMIN and USER roles
+      operationId: getAnswersByQuestionId
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: Bearer token for authentication
+          schema:
+            type: string
+          example: "Bearer your_jwt_token_here"
+        - name: questionId
+          in: path
+          required: true
+          description: ID of the question
+          schema:
+            type: integer
+          example: 1
+      responses:
+        "200":
+          description: List of answers for a specific question
+          content:
+            application/json:
+              examples:
+                application/json:
+                  value:
+                    - id: 1
+                      questionId: 1
+                      content: "Tin cậy, Đảm bảo, Hữu hình, Đồng cảm và Đáp ứng"
+                      isCorrect: true
+                    - id: 2
+                      questionId: 1
+                      content: "Chất lượng, Giá cả, Mẫu mã, Thời gian và Dịch vụ"
+                      isCorrect: false
+        "401":
+          description: Unauthorized
+        "404":
+          description: Question not found
+
+  /answers/user/{userId}:
+    get:
+      summary: Lấy danh sách câu trả lời theo user ID
+      description: Accessible by both ADMIN and USER roles
+      operationId: getAnswersByUserId
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: Bearer token for authentication
+          schema:
+            type: string
+          example: "Bearer your_jwt_token_here"
+        - name: userId
+          in: path
+          required: true
+          description: ID of the user
+          schema:
+            type: integer
+          example: 1
+      responses:
+        "200":
+          description: List of answers for a specific user
+          content:
+            application/json:
+              examples:
+                application/json:
+                  value:
+                    - id: 1
+                      questionId: 1
+                      content: "Tin cậy, Đảm bảo, Hữu hình, Đồng cảm và Đáp ứng"
+                      isCorrect: true
+                    - id: 3
+                      questionId: 2
+                      content: "Khoảng cách giữa mong đợi của khách hàng và trải nghiệm thực tế"
+                      isCorrect: true
+        "401":
+          description: Unauthorized
+        "404":
+          description: User not found
+
+  /answers/search:
+    get:
+      summary: Tìm kiếm câu trả lời
+      description: Only accessible by admin
+      operationId: searchAnswers
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: Bearer token for authentication
+          schema:
+            type: string
+          example: "Bearer your_jwt_token_here"
+        - name: keyword
+          in: query
+          required: true
+          description: Search keyword
+          schema:
+            type: string
+          example: "Tin cậy"
+      responses:
+        "200":
+          description: List of matching answers
+          content:
+            application/json:
+              examples:
+                application/json:
+                  value:
+                    - id: 1
+                      questionId: 1
+                      content: "Tin cậy, Đảm bảo, Hữu hình, Đồng cảm và Đáp ứng"
+                      isCorrect: true
+        "403":
+          description: Forbidden - Only admin can search answers
+        "401":
+          description: Unauthorized

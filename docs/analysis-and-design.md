@@ -6,15 +6,15 @@ This document outlines the **analysis** and **design** process for your microser
 
 ## 1. 🎯 Problem Statement
 
-_Describe the problem your system is solving._
+Hệ thống thi trắc nghiệm trực tuyến yêu cầu đảm bảo khả năng mở rộng, bảo mật và độ tin cậy cao. Người dùng có thể tạo đề thi, tham gia thi, nộp bài và xem kết quả thông qua giao diện web.
+Hệ thống cần hỗ trợ:
 
-- Who are the users?
-- What are the main goals?
-- What kind of data is processed?
-
-> Example: A course management system that allows students to register for courses and teachers to manage class rosters.
-
----
+- Đăng nhập, đăng ký và phân quyền người dùng.
+- Quản lý ngân hàng câu hỏi.
+- Quản lý đề thi trắc nghiệm (quiz).
+- Ghi nhận câu trả lời của người dùng.
+- Tính toán kết quả và lưu trữ.
+- Tích hợp API Gateway để điều phối các request từ client.
 
 ## 2. 🧩 Identified Microservices
 
@@ -22,80 +22,80 @@ List the microservices in your system and their responsibilities.
 
 | Service Name  | Responsibility                                | Tech Stack   |
 |---------------|------------------------------------------------|--------------|
-| service-a     | Handles user authentication and authorization | Python Flask |
-| service-b     | Manages course registration and class data    | Python Flask |
-| gateway       | Routes requests to services                   | Nginx / Flask|
+| service-user    | Quản lý người dùng (đăng ký, đăng nhập, phân quyền) | MySQL + SpringBoot|
+| service-question   | Quản lý ngân hàng câu hỏi trắc nghiệm   | MySQL + SpringBoot |
+| service-answer     | Xử lý câu trả lời từ người dùng               | MySQL + SpringBoot|
+| service-quizz     | Tạo và cấu hình đề thi (quiz) từ danh sách câu hỏi          | MySQL + SpringBoot|
+| service-result     | Nhận và xử lý kết quả thi, lưu trữ điểm và phân tích              | MySQL + SpringBoot|
+| gateway    | API Gateway - Định tuyến và quản lý xác thực            | SpringBoot|
 
 ---
 
 ## 3. 🔄 Service Communication
 
-Describe how your services communicate (e.g., REST APIs, message queue, gRPC).
-
-- Gateway ⇄ service-a (REST)
-- Gateway ⇄ service-b (REST)
-- Internal: service-a ⇄ service-b (optional)
-
----
+| Từ             | Đến                    | Giao thức   |
+|----------------|------------------------|-------------|
+| Client         | API Gateway            | REST        |
+| API Gateway    | User Service           | REST        |
+| API Gateway    | Question Service       | REST        |
+| API Gateway    | Quizz Service          | REST        |
+| API Gateway    | Answer Service         | REST        |
+| API Gateway    | Result Service         | REST        |
 
 ## 4. 🗂️ Data Design
 
-Describe how data is structured and stored in each service.
+| Service          | Data chính lưu trữ                                      |
+|------------------|----------------------------------------------------------|
+| service-user     | Tài khoản người dùng, mật khẩu mã hóa, vai trò (USER/ADMIN) |
+| service-question | Danh sách câu hỏi, chủ đề, mức độ                         |
+| service-quizz    | Cấu trúc đề thi, thời gian làm bài, danh sách câu hỏi     |
+| service-answer   | Câu trả lời của người dùng, thời gian trả lời             |
+| service-result   | Điểm số, thống kê, kết quả cuối cùng                      |
+Mỗi service có một database độc lập
 
-- service-a: User accounts, credentials
-- service-b: Course catalog, registrations
+- user_db của service-user  
+  <img src="assets/users.png" width="500" style="display: block; margin-left: auto; margin-right: auto;" />
 
-Use diagrams if possible (DB schema, ERD, etc.)
+- question_db của service-question  
+  <img src="assets/questions.png" width="500" style="display: block; margin-left: auto; margin-right: auto;" />
 
----
+- quizz_db của service-quizz  
+  <img src="assets/quizzes.png" width="500" style="display: block; margin-left: auto; margin-right: auto;" />
+
+- answer_db của service-answer  
+  <img src="assets/answers.png" width="500" style="display: block; margin-left: auto; margin-right: auto;" />
+
+- result_db của service-result  
+  <img src="assets/results.png" width="500" style="display: block; margin-left: auto; margin-right: auto;" />
 
 ## 5. 🔐 Security Considerations
 
-- Use JWT for user sessions
-- Validate input on each service
-- Role-based access control for APIs
-
----
-
+- Sử dụng **JWT Token** để xác thực người dùng qua Gateway.
+- **API Gateway** kiểm tra `token`, giải mã và điều hướng tới service cần sử dụng.
+- Service sẽ kiểm tra role để xác nhận quyền truy cập
+- Kiểm tra quyền truy cập ở mỗi request:
+  - USER: chỉ có thể xem/thi/nộp bài của chính mình
+  - ADMIN: có thể tạo/sửa đề, thêm câu hỏi, xem thống kê
 
 ## 6. 📦 Deployment Plan
 
-- Use `docker-compose` to manage local environment
-- Each service has its own Dockerfile
-- Environment config stored in `.env` file
-
----
+- Dự án sử dụng **Docker Compose** để triển khai toàn bộ hệ thống.
+- Mỗi service có một **Dockerfile riêng** để build container độc lập.
+- Biến môi trường được cấu hình trong `.env`, sử dụng trong `docker-compose.yml`.
+- Các service sử dụng **network nội bộ** trong Docker để giao tiếp qua `service-name`.
 
 ## 7. 🎨 Architecture Diagram
 
-> *(You can add an image or ASCII diagram below)*
-
-```
-+---------+        +--------------+
-| Gateway | <----> | Service A    |
-|         | <----> | Auth Service |
-+---------+        +--------------+
-       |                ^
-       v                |
-+--------------+   +------------------+
-| Service B    |   | Database / Redis |
-| Course Mgmt  |   +------------------+
-+--------------+
-```
-
----
+<img src="assets/architect.png" width="500" style="display: block; margin-left: auto; margin-right: auto;" />
 
 ## ✅ Summary
 
 Summarize why this architecture is suitable for your use case, how it scales, and how it supports independent development and deployment.
-
-
 
 ## Author
 
 This template was created by Hung Dang.
 - Email: hungdn@ptit.edu.vn
 - GitHub: hungdn1701
-
 
 Good luck! 💪🚀

@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import io.micrometer.common.lang.NonNull;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,9 +48,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     /**
      * Xử lý lỗi validation từ @Valid annotation
      */
+    @SuppressWarnings("null")
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
-            MethodArgumentNotValidException ex, 
+            @NonNull MethodArgumentNotValidException ex, 
             HttpHeaders headers, 
             HttpStatusCode status,
             WebRequest request) {

@@ -1,0 +1,163 @@
+openapi: 3.0.0
+info:
+  title: Result Service API
+  description: API cho service result
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api/v1
+
+paths:
+  /results:
+    post:
+      summary: Tạo một kết quả mới
+      description: Lưu kết quả làm bài quiz của người dùng
+      operationId: saveResult
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: Bearer token for authentication
+          schema:
+            type: string
+          example: "Bearer your_jwt_token_here"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            examples:
+              application/json:
+                value:
+                  userId: 1
+                  quizId: 2
+                  score: 80.5
+                  totalQuestions: 10
+                  correctAnswers: 8
+                  completionTime: 32.5
+                  status: "COMPLETED"
+      responses:
+        "200":
+          description: Result saved successfully
+          content:
+            application/json:
+              examples:
+                application/json:
+                  value:
+                    id: 1
+                    userId: 1
+                    quizId: 2
+                    score: 80.5
+                    totalQuestions: 10
+                    correctAnswers: 8
+                    completionTime: 32.5
+                    status: "COMPLETED"
+                    createdAt: "2025-05-07T10:15:30Z"
+        "401":
+          description: Unauthorized
+
+  /results/{userId}:
+    get:
+      summary: Lấy danh sách kết quả theo user ID
+      description: Truy xuất tất cả kết quả làm bài quiz của một người dùng
+      operationId: getResultsByUserId
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: Bearer token for authentication
+          schema:
+            type: string
+          example: "Bearer your_jwt_token_here"
+        - name: userId
+          in: path
+          required: true
+          description: ID of the user
+          schema:
+            type: integer
+          example: 1
+      responses:
+        "200":
+          description: List of results for a specific user
+          content:
+            application/json:
+              examples:
+                application/json:
+                  value:
+                    - id: 1
+                      userId: 1
+                      quizId: 2
+                      score: 80.5
+                      totalQuestions: 10
+                      correctAnswers: 8
+                      completionTime: 32.5
+                      status: "COMPLETED"
+                      createdAt: "2025-05-07T10:15:30Z"
+                    - id: 3
+                      userId: 1
+                      quizId: 3
+                      score: 95.0
+                      totalQuestions: 10
+                      correctAnswers: 9
+                      completionTime: 28.3
+                      status: "COMPLETED"
+                      createdAt: "2025-05-07T14:22:15Z"
+        "401":
+          description: Unauthorized
+        "404":
+          description: User not found
+
+  /results/{resultId}:
+    patch:
+      summary: Cập nhật một kết quả
+      description: Cập nhật thông tin kết quả làm bài quiz đã tồn tại
+      operationId: updateResult
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: Bearer token for authentication
+          schema:
+            type: string
+          example: "Bearer your_jwt_token_here"
+        - name: resultId
+          in: path
+          required: true
+          description: ID of the result to update
+          schema:
+            type: integer
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            examples:
+              application/json:
+                value:
+                  userId: 1
+                  quizId: 2
+                  score: 85.0
+                  totalQuestions: 10
+                  correctAnswers: 9
+                  completionTime: 30.0
+                  status: "COMPLETED"
+      responses:
+        "200":
+          description: Result updated successfully
+          content:
+            application/json:
+              examples:
+                application/json:
+                  value:
+                    id: 1
+                    userId: 1
+                    quizId: 2
+                    score: 85.0
+                    totalQuestions: 10
+                    correctAnswers: 9
+                    completionTime: 30.0
+                    status: "COMPLETED"
+                    createdAt: "2025-05-07T10:15:30Z"
+                    updatedAt: "2025-05-07T11:20:45Z"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Result not found
